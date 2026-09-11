@@ -28,8 +28,6 @@ export default function Home() {
   const [source, setSource] = useState<SourceType>("url");
   const [value, setValue] = useState("");
   const [assetValue, setAssetValue] = useState("");
-  const [apiKey, setApiKey] = useState("");
-  const [showKey, setShowKey] = useState(false);
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
@@ -44,12 +42,12 @@ export default function Home() {
   }
 
   async function startRefresh() {
-    if (!value.trim() || !apiKey.trim() || running) return;
+    if (!value.trim() || running) return;
     setRunning(true); setResult(null); setError(""); setProgress(0);
     let marker = 0;
     const timer = window.setInterval(() => { marker = Math.min(marker + 1, 5); setProgress(marker); }, 7000);
     try {
-      const response = await fetch("/api/refresh", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ source, value, assets:assetValue, apiKey }) });
+      const response = await fetch("/api/refresh", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ source, value, assets:assetValue }) });
       const data = await response.json();
       if (!response.ok) throw new Error(response.status === 429 ? "The API is still busy after automatic retries. Wait one minute and click Run full refresh again." : data.error || "The refresh could not be completed.");
       setProgress(6); setResult(data); setTab("strategy"); setChatMessages([]);
@@ -65,7 +63,7 @@ export default function Home() {
     if (!instruction || !result || revising) return;
     setChatInput(""); setChatMessages(items=>[...items,{role:"user",text:instruction}]); setRevising(true);
     try {
-      const response = await fetch("/api/revise", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({apiKey,instruction,final:result.final,context:{query:result.strategy.recommended_query,outline:result.outline,gaps:result.gaps},history:chatMessages.slice(-6)})});
+      const response = await fetch("/api/revise", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({instruction,final:result.final,context:{query:result.strategy.recommended_query,outline:result.outline,gaps:result.gaps},history:chatMessages.slice(-6)})});
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "The edit could not be applied.");
       setResult(current=>current?{...current,final:data.final}:current);
@@ -93,11 +91,7 @@ export default function Home() {
       </div>
       <label className="source-field"><span>{fieldLabel}</span>{source === "html" || source === "text" ? <textarea value={value} onChange={e=>setValue(e.target.value)} placeholder={placeholder} rows={7}/> : <input type="url" value={value} onChange={e=>setValue(e.target.value)} placeholder={placeholder}/>}</label>
       {source==="url"&&<details className="asset-fallback"><summary>Need to preserve images from a protected page?</summary><p>Some sites hide image URLs from research tools. Paste the article’s image tags, CDN URLs, or CMS HTML here and Reframe will carry them into the refreshed article.</p><textarea value={assetValue} onChange={e=>setAssetValue(e.target.value)} placeholder={'<img src="https://…" alt="…">\n—or paste the existing CMS HTML—'} rows={5}/></details>}
-      <div className="key-row">
-        <div><strong>OpenAI API key</strong><small>Required to run research and rewriting. Used for this request only and never stored.</small></div>
-        <div className="key-input"><input type={showKey?"text":"password"} value={apiKey} onChange={e=>setApiKey(e.target.value)} placeholder="sk-…" autoComplete="off"/><button onClick={()=>setShowKey(!showKey)} type="button">{showKey?"Hide":"Show"}</button></div>
-      </div>
-      <div className="start-footer"><p>A full refresh can take a few minutes. Temporary API limits are retried automatically.</p><button disabled={!value.trim()||!apiKey.trim()||running} onClick={startRefresh}>{running?"Refreshing…":"Run full refresh"}</button></div>
+      <div className="start-footer"><p>A full refresh can take a few minutes. Temporary API limits are retried automatically.</p><button disabled={!value.trim()||running} onClick={startRefresh}>{running?"Refreshing…":"Run full refresh"}</button></div>
       {error && <div className="error-notice"><b>!</b><span><strong>Refresh stopped</strong>{error}</span></div>}
     </section>
 

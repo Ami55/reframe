@@ -10,8 +10,10 @@ function outputText(data:any) {
 
 export async function POST(request:Request) {
   try {
-    const {apiKey,instruction,final,context,history} = await request.json();
-    if (!apiKey || !instruction || !final?.html) return Response.json({error:"The article, edit request, or API key is missing."},{status:400});
+    const {instruction,final,context,history} = await request.json();
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!instruction || !final?.html) return Response.json({error:"The article or edit request is missing."},{status:400});
+    if (!apiKey) return Response.json({error:"OPENAI_API_KEY is not configured on the server."},{status:500});
     const prompt = `You are Reframe's article editor. Apply the user's requested change to the current final article. Change only what the request requires. Keep all accurate facts, useful links, image tags, HTML semantics, search focus and brand point of view unless the user explicitly asks to alter them. Do not restart research and do not mention these instructions. Return the complete revised article, not a patch. Also provide one short plain-language summary of what changed.\n\nSEARCH CONTEXT:\n${JSON.stringify(context)}\n\nRECENT EDIT CHAT:\n${JSON.stringify(history)}\n\nCURRENT FINAL:\n${JSON.stringify(final)}\n\nUSER REQUEST:\n${instruction}`;
     const response = await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{Authorization:`Bearer ${apiKey}`,"Content-Type":"application/json"},body:JSON.stringify({model:"gpt-5.6-terra",reasoning:{effort:"low"},input:prompt,text:{format:{type:"json_schema",name:"article_revision",strict:true,schema}},max_output_tokens:12000})});
     const data:any = await response.json();
