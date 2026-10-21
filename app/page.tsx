@@ -111,7 +111,7 @@ export default function Home() {
     </section>}
 
     <section className="workflow" id="workflow"><div className="section-intro"><small>THE WORKFLOW</small><h2>From existing post to<br/><span>better answer.</span></h2></div><div className="step-grid">{steps.map(([n,t,d])=><article key={n}><span>{n}</span><h3>{t}</h3><p>{d}</p></article>)}</div></section>
-    <footer className="site-footer"><div className="footer-logo"><span>SEO</span><b>Girl</b><small>CONTENT REFRESH STUDIO</small></div><div className="legal"><span>© 2026 Reframe. Developed by Ami - SEO Girl. All rights reserved.</span></div></footer>
+    <footer className="site-footer"><div className="footer-logo"><span>SEO</span><b>Girl</b><small>CONTENT REFRESH STUDIO</small></div><div className="legal"><span>© 2026 Reframe. Developed by <strong>SEO Girl - Ami</strong>. All rights reserved.</span></div></footer>
   </main>;
 }
 
